@@ -140,6 +140,7 @@ walk_wine_staging_git_tree()
 		fi
 	done
 	unset __WINE_STAGING_GIT_LOG_ARRAY
+	[[ ! -z "${__TARGET_WINE_STAGING_COMMIT}" ]] && { git reset --hard --quiet "${__TARGET_WINE_STAGING_COMMIT}" || die "git reset"; }
 	[[ ! -z "${GIT_DIR}" ]] && { popd >/dev/null || die "popd"; }
 	[[ -z "${__TARGET_WINE_STAGING_COMMIT}" ]] && return 1
 	if [[ -z ${__WINE_STAGING_COMMIT_RETVAR} ]]; then

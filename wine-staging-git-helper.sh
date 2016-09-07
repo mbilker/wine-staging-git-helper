@@ -9,17 +9,17 @@ declare	-r SHA1_REGEXP="[[:xdigit:]]{40}"
 get_date_offset()
 {
 	(((2 <= $#) || ($# <= 3))) || die "Invalid argument count (2-3)"
-	local	__BASE_DATE="${1}"
-	local	__BASE_OFFSET="${2}"
-	local	__OFFSET_DATE_RETVAR="${3}"
+	local	__base_date="${1}"
+	local	__base_offset="${2}"
+	local	__offset_date_retvar="${3}"
 
-	[[ ! "${__BASE_OFFSET}" =~ ^(\+|\-) ]] && __BASE_OFFSET="+${__BASE_OFFSET}"
-	local __OFFSET_DATE="$( date --rfc-3339=seconds -d "${__BASE_DATE}${__BASE_OFFSET}" ; (($?>0)) && die "date" )"
-	[[ -z "${__OFFSET_DATE}" ]] && return 1
-	if [[ -z ${__OFFSET_DATE_RETVAR} ]]; then
-		echo "${__OFFSET_DATE}"
+	[[ ! "${__base_offset}" =~ ^(\+|\-) ]] && __base_offset="+${__base_offset}"
+	local __offset_date="$( date --rfc-3339=seconds -d "${__base_date}${__base_offset}" ; (($?>0)) && die "date" )"
+	[[ -z "${__offset_date}" ]] && return 1
+	if [[ -z ${__offset_date_retvar} ]]; then
+		echo "${__offset_date}"
 	else
-		eval $__OFFSET_DATE_RETVAR="'${__OFFSET_DATE}'"
+		eval $__offset_date_retvar="'${__offset_date}'"
 	fi
 }
 
@@ -30,22 +30,22 @@ get_date_offset()
 get_git_commit_date()
 {
 	(((2 <= $#) || ($# <= 3))) || die "Invalid argument count (2-3)"
-	local	__GIT_DIR="${1}"
-	local	__GIT_COMMIT="${2}"
-	local	__GIT_COMMIT_DATE_RETVAR="${3}"
+	local	__git_dir="${1}"
+	local	__git_commit="${2}"
+	local	__git_commit_date_retvar="${3}"
 
-	[[ ! -z "${__GIT_DIR}" && "x${__GIT_DIR}" == "x${PWD}" ]] && unset -v __GIT_DIR
-	[[ ! -z "${__GIT_DIR}" ]] && { pushd "${__GIT_DIR}" >/dev/null || die "pushd \"${__GIT_DIR}\""; }
+	[[ ! -z "${__git_dir}" && "x${__git_dir}" == "x${PWD}" ]] && unset -v __git_dir
+	[[ ! -z "${__git_dir}" ]] && { pushd "${__git_dir}" >/dev/null || die "pushd \"${__git_dir}\""; }
 	[[ -d "{PWD}/.git" ]] && die "Git tree not detected in directory \"${PWD}\" ."
-	[[ "${__GIT_COMMIT}" =~ ${SHA1_REGEXP} ]] \
-			|| die "Parameter (2): invalid SHA-1 git commit \"${__GIT_COMMIT}\""
-	local __GIT_COMMIT_DATE="$( git show -s --format=%ci "${__GIT_COMMIT}" ; (($?>0)) && die "git show" )"
-	[[ ! -z "${__GIT_DIR}" ]] && { popd >/dev/null || die "popd"; }
-	[[ -z "${__GIT_COMMIT_DATE}" ]] && return 1
-	if [[ -z ${__GIT_COMMIT_DATE_RETVAR} ]]; then
-		echo "${__GIT_COMMIT_DATE}"
+	[[ "${__git_commit}" =~ ${SHA1_REGEXP} ]] \
+			|| die "Parameter (2): invalid SHA-1 git commit \"${__git_commit}\""
+	local __git_commit_date="$( git show -s --format=%ci "${__git_commit}" ; (($?>0)) && die "git show" )"
+	[[ ! -z "${__git_dir}" ]] && { popd >/dev/null || die "popd"; }
+	[[ -z "${__git_commit_date}" ]] && return 1
+	if [[ -z ${__git_commit_date_retvar} ]]; then
+		echo "${__git_commit_date}"
 	else
-		eval $__GIT_COMMIT_DATE_RETVAR="'${__GIT_COMMIT_DATE}'"
+		eval $__git_commit_date_retvar="'${__git_commit_date}'"
 	fi
 }
 
@@ -57,24 +57,24 @@ get_git_commit_date()
 get_sieved_git_commit_log()
 {
 	(((2 <= $#) || ($# <= 4))) || die "Invalid argument count (2-4)"
-	local	__GIT_DIR="${1}"
-	local	START_DATE="${2}"
-	local	END_DATE="${3}"
-	local	-a __GIT_LOG_ARRAY="${@: -1:1}"
+	local	__git_dir="${1}"
+	local	start_date="${2}"
+	local	end_date="${3}"
+	local	-a __git_log_array="${@: -1:1}"
 
-	[[ ! -z "${__GIT_DIR}" && "x${__GIT_DIR}" == "x${PWD}" ]] && unset -v __GIT_DIR
-	[[ ! -z "${__GIT_DIR}" ]] && { pushd "${__GIT_DIR}" >/dev/null || die "pushd \"${__GIT_DIR}\""; }
+	[[ ! -z "${__git_dir}" && "x${__git_dir}" == "x${PWD}" ]] && unset -v __git_dir
+	[[ ! -z "${__git_dir}" ]] && { pushd "${__git_dir}" >/dev/null || die "pushd \"${__git_dir}\""; }
 	[[ -d "{PWD}/.git" ]] && die "Git tree not detected in directory \"${PWD}\" ."
-	local __GIT_LOG
+	local __git_log
 	if [[ ${#} -eq 4 ]]; then
-		__GIT_LOG="$( git log --format='%H,%P' --reverse --all --after "${START_DATE}" --before "${END_DATE}" ; (($?>0)) && die "git log" )"
+		__git_log="$( git log --format='%H,%P' --reverse --all --after "${start_date}" --before "${end_date}" ; (($?>0)) && die "git log" )"
 	elif [[ ${#} -eq 3 ]]; then
-		__GIT_LOG="$( git log --format='%H,%P' --reverse --all --after "${START_DATE}" ; (($?>0)) && die "git log" )"
+		__git_log="$( git log --format='%H,%P' --reverse --all --after "${start_date}" ; (($?>0)) && die "git log" )"
 	else
-		__GIT_LOG="$( git log --format='%H,%P' --reverse --all  ; (($?>0)) && die "git log" )"
+		__git_log="$( git log --format='%H,%P' --reverse --all  ; (($?>0)) && die "git log" )"
 	fi
-	[[ ! -z "${__GIT_DIR}" ]] && { popd >/dev/null || die "popd"; }
-	eval ${__GIT_LOG_ARRAY}="( $(printf '%s' "${__GIT_LOG}" ) )"
+	[[ ! -z "${__git_dir}" ]] && { popd >/dev/null || die "popd"; }
+	eval ${__git_log_array}="( $(printf '%s' "${__git_log}" ) )"
 }
 
 # get_upstream_wine_commit()
@@ -84,28 +84,28 @@ get_sieved_git_commit_log()
 get_upstream_wine_commit()
 {
 	(((2 <= $#) || ($# <= 3))) || die "Invalid argument count (2-3)"
-	local	WINE_STAGING_GIT_DIR="${1}"
-	local	__TARGET_WINE_STAGING_COMMIT="${2}"
-	local	__WINE_GIT_COMMIT_RETVAR="${3}"
+	local	wine_staging_git_dir="${1}"
+	local	__target_wine_staging_commit="${2}"
+	local	__wine_git_commit_retvar="${3}"
 
-	[[ "x${WINE_STAGING_GIT_DIR}" != "x${PWD}" ]] && local GIT_DIR="${WINE_STAGING_GIT_DIR}"
-	[[ ! -z "${GIT_DIR}" ]] && { pushd "${GIT_DIR}" >/dev/null || die "pushd \"${GIT_DIR}\""; }
+	[[ "x${wine_staging_git_dir}" != "x${PWD}" ]] && local git_dir="${wine_staging_git_dir}"
+	[[ ! -z "${git_dir}" ]] && { pushd "${git_dir}" >/dev/null || die "pushd \"${git_dir}\""; }
 	[[ -d "{PWD}/.git" ]] && die "Wine-Staging git tree not detected in directory \"${PWD}\" ."
-	[[ "${__TARGET_WINE_STAGING_COMMIT}" =~ ${SHA1_REGEXP} ]] \
-			|| die "Parameter (2): invalid Wine-Staging SHA-1 git commit \"${__TARGET_WINE_STAGING_COMMIT}\""
-	local -r PATCH_INSTALLER="patches/patchinstall.sh"
-	git reset --hard --quiet "${__TARGET_WINE_STAGING_COMMIT}" || die "git reset"
-	[[ -f "${PATCH_INSTALLER}" ]] || die "Unable to find Wine-Staging \"${PATCH_INSTALLER}\" script."
-	local WINE_STAGING_VERSION=$( "${PATCH_INSTALLER}" --version 2>/dev/null; (($?>0)) && die "bash script \"${PATCH_INSTALLER}\"" )
-	[[ ! -z "${GIT_DIR}" ]] && { popd >/dev/null || die "popd"; }
-	local __WINE_GIT_COMMIT=$(printf '%s' "${WINE_STAGING_VERSION}" | awk '{ if ($1=="commit") print $2}' 2>/dev/null)
-	if [[ ! "${__WINE_GIT_COMMIT}" =~ ${SHA1_REGEXP} ]]; then
-		die "awk: failed to get Wine commit corresponding to Wine-Staging commit \"${__TARGET_WINE_STAGING_COMMIT}\" ."
+	[[ "${__target_wine_staging_commit}" =~ ${SHA1_REGEXP} ]] \
+			|| die "Parameter (2): invalid Wine-Staging SHA-1 git commit \"${__target_wine_staging_commit}\""
+	local -r patch_installer="patches/patchinstall.sh"
+	git reset --hard --quiet "${__target_wine_staging_commit}" || die "git reset"
+	[[ -f "${patch_installer}" ]] || die "Unable to find Wine-Staging \"${patch_installer}\" script."
+	local wine_staging_version=$( "${patch_installer}" --version 2>/dev/null; (($?>0)) && die "bash script \"${patch_installer}\"" )
+	[[ ! -z "${git_dir}" ]] && { popd >/dev/null || die "popd"; }
+	local __wine_git_commit=$(printf '%s' "${wine_staging_version}" | awk '{ if ($1=="commit") print $2}' 2>/dev/null)
+	if [[ ! "${__wine_git_commit}" =~ ${SHA1_REGEXP} ]]; then
+		die "awk: failed to get Wine commit corresponding to Wine-Staging commit \"${__target_wine_staging_commit}\" ."
 	fi
-	if [[ -z ${__WINE_GIT_COMMIT_RETVAR} ]]; then
-		echo "${__WINE_GIT_COMMIT}"
+	if [[ -z ${__wine_git_commit_retvar} ]]; then
+		echo "${__wine_git_commit}"
 	else
-		eval $__WINE_GIT_COMMIT_RETVAR="'${__WINE_GIT_COMMIT}'"
+		eval $__wine_git_commit_retvar="'${__wine_git_commit}'"
 	fi
 }
 
@@ -117,39 +117,39 @@ get_upstream_wine_commit()
 walk_wine_staging_git_tree()
 {
 	(((3 <= $#) || ($# <= 4))) || die "Invalid argument count (3-4)"
-	local	WINE_STAGING_GIT_DIR="${1}"
-	local	WINE_GIT_DIR="${2}"
-	local	__TARGET_WINE_COMMIT="${3}"
-	local	__WINE_STAGING_COMMIT_RETVAR="${4}"
+	local	wine_staging_git_dir="${1}"
+	local	wine_git_dir="${2}"
+	local	__target_wine_commit="${3}"
+	local	__wine_staging_commit_retvar="${4}"
 
-	local __TARGET_WINE_COMMIT_DATE=$(get_git_commit_date "${WINE_GIT_DIR}" "${__TARGET_WINE_COMMIT}")
-	[[ "x${WINE_STAGING_GIT_DIR}" != "x${PWD}" ]] && local GIT_DIR="${WINE_STAGING_GIT_DIR}"
-	[[ ! -z "${GIT_DIR}" ]] && { pushd "${GIT_DIR}" >/dev/null || die "pushd"; }
+	local __target_wine_commit_date=$(get_git_commit_date "${wine_git_dir}" "${__target_wine_commit}")
+	[[ "x${wine_staging_git_dir}" != "x${PWD}" ]] && local git_dir="${wine_staging_git_dir}"
+	[[ ! -z "${git_dir}" ]] && { pushd "${git_dir}" >/dev/null || die "pushd"; }
 	[[ -d "{PWD}/.git" ]] && die "Wine-Staging git tree not detected in directory \"${PWD}\" ."
-	[[ "${__TARGET_WINE_COMMIT}" =~ ${SHA1_REGEXP} ]] \
-			|| die "Parameter (3): invalid Wine SHA-1 git commit \"${__TARGET_WINE_COMMIT}\""
-	declare -a __WINE_STAGING_GIT_LOG_ARRAY
-	get_sieved_git_commit_log "${WINE_STAGING_GIT_DIR}" "${__TARGET_WINE_COMMIT_DATE}" "__WINE_STAGING_GIT_LOG_ARRAY"
-	local COMMITS_TOTAL=${#__WINE_STAGING_GIT_LOG_ARRAY[@]}
-	local INDEX
-	for (( INDEX=0 ; INDEX<COMMITS_TOTAL ; ++INDEX )); do
-		local __PREV_WINE_STAGING_COMMIT="${__TARGET_WINE_STAGING_COMMIT:-${__WINE_STAGING_COMMIT}}"
-        local __WINE_STAGING_COMMIT="${__WINE_STAGING_GIT_LOG_ARRAY[INDEX]:0:40}"
-		local __WINE_STAGING_PARENT_COMMIT="${__WINE_STAGING_GIT_LOG_ARRAY[INDEX]:41:40}"
-		if [[ -z "${__PREV_WINE_STAGING_COMMIT}" ]] || [[ "x${__WINE_STAGING_PARENT_COMMIT}" == "x${__PREV_WINE_STAGING_COMMIT}" ]]; then
-			local __WINE_GIT_COMMIT=$(get_upstream_wine_commit "${WINE_STAGING_GIT_DIR}" "${__WINE_STAGING_COMMIT}")
+	[[ "${__target_wine_commit}" =~ ${SHA1_REGEXP} ]] \
+			|| die "Parameter (3): invalid Wine SHA-1 git commit \"${__target_wine_commit}\""
+	declare -a __wine_staging_git_log_array
+	get_sieved_git_commit_log "${wine_staging_git_dir}" "${__target_wine_commit_date}" "__wine_staging_git_log_array"
+	local commit_total=${#__wine_staging_git_log_array[@]}
+	local index
+	for (( index=0 ; index<commit_total ; ++index )); do
+		local __prev_wine_staging_commit="${__target_wine_staging_commit:-${__wine_staging_commit}}"
+        local __wine_staging_commit="${__wine_staging_git_log_array[index]:0:40}"
+		local __wine_staging_parent_commit="${__wine_staging_git_log_array[index]:41:40}"
+		if [[ -z "${__prev_wine_staging_commit}" ]] || [[ "x${__wine_staging_parent_commit}" == "x${__prev_wine_staging_commit}" ]]; then
+			local __wine_git_commit=$(get_upstream_wine_commit "${wine_staging_git_dir}" "${__wine_staging_commit}")
 			# keep searching even when we find a commit match (get most recent/matching Wine-Staging commit) ...
-			[[ "x${__WINE_GIT_COMMIT}" == "x${__TARGET_WINE_COMMIT}" ]] && local __TARGET_WINE_STAGING_COMMIT="${__WINE_STAGING_COMMIT}"
+			[[ "x${__wine_git_commit}" == "x${__target_wine_commit}" ]] && local __target_wine_staging_commit="${__wine_staging_commit}"
 		fi
 	done
-	unset __WINE_STAGING_GIT_LOG_ARRAY
-	[[ ! -z "${__TARGET_WINE_STAGING_COMMIT}" ]] && { git reset --hard --quiet "${__TARGET_WINE_STAGING_COMMIT}" || die "git reset"; }
-	[[ ! -z "${GIT_DIR}" ]] && { popd >/dev/null || die "popd"; }
-	[[ -z "${__TARGET_WINE_STAGING_COMMIT}" ]] && return 1
-	if [[ -z ${__WINE_STAGING_COMMIT_RETVAR} ]]; then
-		echo "${__TARGET_WINE_STAGING_COMMIT}"
+	unset __wine_staging_git_log_array
+	[[ ! -z "${__target_wine_staging_commit}" ]] && { git reset --hard --quiet "${__target_wine_staging_commit}" || die "git reset"; }
+	[[ ! -z "${git_dir}" ]] && { popd >/dev/null || die "popd"; }
+	[[ -z "${__target_wine_staging_commit}" ]] && return 1
+	if [[ -z ${__wine_staging_commit_retvar} ]]; then
+		echo "${__target_wine_staging_commit}"
 	else
-		eval $__WINE_STAGING_COMMIT_RETVAR="'${__TARGET_WINE_STAGING_COMMIT}'"
+		eval $__wine_staging_commit_retvar="'${__target_wine_staging_commit}'"
 	fi
 }
 
@@ -162,69 +162,69 @@ walk_wine_staging_git_tree()
 find_closest_wine_commit()
 {
 	(($# == 5)) || die "Invalid argument count (5)"
-	local	WINE_STAGING_GIT_DIR="${1}"
-	local	WINE_GIT_DIR="${2}"
-	local	__WINE_COMMIT_RETVAR="${3}"
-	local	__WINE_STAGING_COMMIT_RETVAR="${4}"
-	local	__WINE_COMMIT_DIFF_RETVAR="${5}"
+	local	wine_staging_git_dir="${1}"
+	local	wine_git_dir="${2}"
+	local	__wine_commit_retvar="${3}"
+	local	__wine_staging_commit_retvar="${4}"
+	local	__wine_commit_diff_retvar="${5}"
 
 	# Search is weighted to preceeding time period - since Wine-Staging git is delayed in tracking Wine git tree
-	local -r WINE_GIT_DATE_ROFFSET="-2 weeks"
-	local -r WINE_GIT_DATE_FOFFSET="+1 week"
-	[[ "x${WINE_GIT_DIR}" != "x${PWD}" ]] && local GIT_DIR="${WINE_GIT_DIR}"
-	[[ ! -z "${GIT_DIR}" ]] && { pushd "${GIT_DIR}" || die "pushd"; }
+	local -r wine_git_date_roffset="-2 weeks"
+	local -r wine_git_date_foffset="+1 week"
+	[[ "x${wine_git_dir}" != "x${PWD}" ]] && local git_dir="${wine_git_dir}"
+	[[ ! -z "${git_dir}" ]] && { pushd "${git_dir}" || die "pushd"; }
 	[[ -d "{PWD}/.git" ]] && die "Wine git tree not detected in directory \"${PWD}\" ."
-	[[ "${!__WINE_COMMIT_RETVAR}" =~ ${SHA1_REGEXP} ]] \
-			|| die "Parameter (3): invalid Wine SHA-1 git commit \"${!__WINE_COMMIT_RETVAR}\""
-	declare -a __WINE_GIT_LOG_ARRAY
-	local __WINE_COMMIT_DATE=$( get_git_commit_date "${WINE_GIT_DIR}" "${!__WINE_COMMIT_RETVAR}" )
-	local __WINE_REVERSE_DATE_LIMIT=$( get_date_offset "${__WINE_COMMIT_DATE}" "${WINE_GIT_DATE_ROFFSET}" )
-	local __WINE_FORWARD_DATE_LIMIT=$( get_date_offset "${__WINE_COMMIT_DATE}" "${WINE_GIT_DATE_FOFFSET}" )
-	get_sieved_git_commit_log "${WINE_GIT_DIR}" "${__WINE_REVERSE_DATE_LIMIT}" "${__WINE_FORWARD_DATE_LIMIT}" "__WINE_GIT_LOG_ARRAY"
-	local COMMITS_TOTAL=${#__WINE_GIT_LOG_ARRAY[@]}
-	local PRE_INDEX=-1
-	local POST_INDEX=${COMMITS_TOTAL}
-	local INDEX
-	for INDEX in "${!__WINE_GIT_LOG_ARRAY[@]}"; do
-		[[ "x${!__WINE_COMMIT_RETVAR}" == "x${__WINE_GIT_LOG_ARRAY[INDEX]:0:40}" ]] && break
+	[[ "${!__wine_commit_retvar}" =~ ${SHA1_REGEXP} ]] \
+			|| die "Parameter (3): invalid Wine SHA-1 git commit \"${!__wine_commit_retvar}\""
+	declare -a __wine_git_log_array
+	local __wine_commit_date=$( get_git_commit_date "${wine_git_dir}" "${!__wine_commit_retvar}" )
+	local __wine_reverse_date_limit=$( get_date_offset "${__wine_commit_date}" "${wine_git_date_roffset}" )
+	local __wine_forward_date_limit=$( get_date_offset "${__wine_commit_date}" "${wine_git_date_foffset}" )
+	get_sieved_git_commit_log "${wine_git_dir}" "${__wine_reverse_date_limit}" "${__wine_forward_date_limit}" "__wine_git_log_array"
+	local commit_total=${#__wine_git_log_array[@]}
+	local pre_index=-1
+	local post_index=${commit_total}
+	local index
+	for index in "${!__wine_git_log_array[@]}"; do
+		[[ "x${!__wine_commit_retvar}" == "x${__wine_git_log_array[index]:0:40}" ]] && break
 	done
-	(( ($? == 0) && ( PRE_INDEX=POST_INDEX=INDEX ) ))
-	while (( (0<=PRE_INDEX) || (POST_INDEX<COMMITS_TOTAL) )); do
+	(( ($? == 0) && ( pre_index=post_index=index ) ))
+	while (( (0<=pre_index) || (post_index<commit_total) )); do
 		# Go backwards
-		if (( PRE_INDEX >= 0 )); then
-			local PRE_COMMIT_TARGET_CHILD="${__WINE_GIT_LOG_ARRAY[PRE_INDEX]:41:40}"
-			while (( --PRE_INDEX >= 0 )); do
-				[[ "x${PRE_COMMIT_TARGET_CHILD}" == "x${__WINE_GIT_LOG_ARRAY[PRE_INDEX]:0:40}" ]] && break
+		if (( pre_index >= 0 )); then
+			local pre_commit_target_child="${__wine_git_log_array[pre_index]:41:40}"
+			while (( --pre_index >= 0 )); do
+				[[ "x${pre_commit_target_child}" == "x${__wine_git_log_array[pre_index]:0:40}" ]] && break
 			done
-			if (( PRE_INDEX >= 0 )); then
-				local TARGET_WINE_COMMIT="${__WINE_GIT_LOG_ARRAY[PRE_INDEX]:0:40}"
-				local __WINE_COMMIT_DIFF=$(( PRE_INDEX - INDEX ))
-				local TARGET_WINE_STAGING_COMMIT
-				walk_wine_staging_git_tree "${WINE_STAGING_GIT_DIR}" "${WINE_GIT_DIR}" "${TARGET_WINE_COMMIT}" "TARGET_WINE_STAGING_COMMIT" \
+			if (( pre_index >= 0 )); then
+				local target_wine_commit="${__wine_git_log_array[pre_index]:0:40}"
+				local __wine_commit_diff=$(( pre_index - index ))
+				local target_wine_staging_commit
+				walk_wine_staging_git_tree "${wine_staging_git_dir}" "${wine_git_dir}" "${target_wine_commit}" "target_wine_staging_commit" \
 					&& break
 			fi
 		fi
 		# Go forwards
-		if (( POST_INDEX < COMMITS_TOTAL )); then
-			local POST_COMMIT_TARGET_PARENT="${__WINE_GIT_LOG_ARRAY[POST_INDEX]:0:40}"
-			while (( ++POST_INDEX < COMMITS_TOTAL )); do
-				[[ "x${POST_COMMIT_TARGET_PARENT}" == "x${__WINE_GIT_LOG_ARRAY[POST_INDEX]:41:40}" ]] && break
+		if (( post_index < commit_total )); then
+			local post_commit_target_parent="${__wine_git_log_array[post_index]:0:40}"
+			while (( ++post_index < commit_total )); do
+				[[ "x${post_commit_target_parent}" == "x${__wine_git_log_array[post_index]:41:40}" ]] && break
 			done
-			if (( POST_INDEX < COMMITS_TOTAL )); then
-				local TARGET_WINE_COMMIT="${__WINE_GIT_LOG_ARRAY[POST_INDEX]:0:40}"
-				local __WINE_COMMIT_DIFF=$(( POST_INDEX - INDEX ))
-				local TARGET_WINE_STAGING_COMMIT
-				walk_wine_staging_git_tree "${WINE_STAGING_GIT_DIR}" "${WINE_GIT_DIR}"  "${TARGET_WINE_COMMIT}" "TARGET_WINE_STAGING_COMMIT" \
+			if (( post_index < commit_total )); then
+				local target_wine_commit="${__wine_git_log_array[post_index]:0:40}"
+				local __wine_commit_diff=$(( post_index - index ))
+				local target_wine_staging_commit
+				walk_wine_staging_git_tree "${wine_staging_git_dir}" "${wine_git_dir}"  "${target_wine_commit}" "target_wine_staging_commit" \
 					&& break
 			fi
 		fi
 	done
-	unset -v __WINE_GIT_LOG_ARRAY
-	[[ ! -z "${GIT_DIR}" ]] && { popd || die; }
-	[[ -z "${TARGET_WINE_STAGING_COMMIT}" ]] && return 1
-	eval $__WINE_COMMIT_RETVAR="'${TARGET_WINE_COMMIT}'"
-	eval $__WINE_STAGING_COMMIT_RETVAR="'${TARGET_WINE_STAGING_COMMIT}'"
-	[[ -z "{$__WINE_COMMIT_DIFF_RETVAR}" ]] || eval $__WINE_COMMIT_DIFF_RETVAR="'${__WINE_COMMIT_DIFF}'"
+	unset -v __wine_git_log_array
+	[[ ! -z "${git_dir}" ]] && { popd || die; }
+	[[ -z "${target_wine_staging_commit}" ]] && return 1
+	eval $__wine_commit_retvar="'${target_wine_commit}'"
+	eval $__wine_staging_commit_retvar="'${target_wine_staging_commit}'"
+	[[ -z "{$__wine_commit_diff_retvar}" ]] || eval $__wine_commit_diff_retvar="'${__wine_commit_diff}'"
 }
 
 # display_closest_wine_commit_message()
@@ -234,27 +234,27 @@ find_closest_wine_commit()
 display_closest_wine_commit_message()
 {
 	((${#}==3)) || die "Invalid argument count (3)"
-	local	__TARGET_WINE_COMMIT="${1}"
-	local	__TARGET_WINE_STAGING_COMMIT="${2}"
-	local	__WINE_COMMIT_DIFF="${3}"
+	local	__target_wine_commit="${1}"
+	local	__target_wine_staging_commit="${2}"
+	local	__wine_commit_diff="${3}"
 
-	[[ "${__TARGET_WINE_COMMIT}" =~ ${SHA1_REGEXP} ]] \
-			|| die "Parameter (1): invalid Wine SHA-1 git commit \"${__TARGET_WINE_COMMIT}\""
-	[[ "${__TARGET_WINE_STAGING_COMMIT}" =~ ${SHA1_REGEXP} ]] \
-			|| die "Parameter (2): invalid Wine-Staging SHA-1 git commit \"${__TARGET_WINE_STAGING_COMMIT}\""
-	if (( __WINE_COMMIT_DIFF < 0 )); then
-		__WINE_COMMIT_DIFF=$((-__WINE_COMMIT_DIFF))
-		local DIFF_MESSAGE="offset ${__WINE_COMMIT_DIFF} commits back"
-	elif (( __WINE_COMMIT_DIFF > 0 )); then
-		local DIFF_MESSAGE="offset ${__WINE_COMMIT_DIFF} commits foward"
+	[[ "${__target_wine_commit}" =~ ${SHA1_REGEXP} ]] \
+			|| die "Parameter (1): invalid Wine SHA-1 git commit \"${__target_wine_commit}\""
+	[[ "${__target_wine_staging_commit}" =~ ${SHA1_REGEXP} ]] \
+			|| die "Parameter (2): invalid Wine-Staging SHA-1 git commit \"${__target_wine_staging_commit}\""
+	if (( __wine_commit_diff < 0 )); then
+		__wine_commit_diff=$((-__wine_commit_diff))
+		local diff_message="offset ${__wine_commit_diff} commits back"
+	elif (( __wine_commit_diff > 0 )); then
+		local diff_message="offset ${__wine_commit_diff} commits foward"
 	else
-		local DIFF_MESSAGE="no offset"
+		local diff_message="no offset"
 	fi
-	(( __WINE_COMMIT_DIFF == 1 )) && DIFF_MESSAGE="${DIFF_MESSAGE/commits /commit }"
+	(( __wine_commit_diff == 1 )) && diff_message="${diff_message/commits /commit }"
 
-	eerror "Try rebuilding this package using the closest supported Wine commit (${DIFF_MESSAGE}):"
-	eerror "        EGIT_COMMIT=\"${__TARGET_WINE_COMMIT}\" emerge -v =${CATEGORY}/${P}  # build against Wine commit"
+	eerror "Try rebuilding this package using the closest supported Wine commit (${diff_message}):"
+	eerror "   EGIT_WINE_COMMIT=\"${__target_wine_commit}\" emerge -v =${CATEGORY}/${P}  # build against Wine commit"
 	eerror "... or:"
-	eerror "EGIT_STAGING_COMMIT=\"${__TARGET_WINE_STAGING_COMMIT}\" emerge -v =${CATEGORY}/${P}  # build against Wine-Staging commit"
+	eerror "EGIT_STAGING_COMMIT=\"${__target_wine_staging_commit}\" emerge -v =${CATEGORY}/${P}  # build against Wine-Staging commit"
 	eerror
 }
